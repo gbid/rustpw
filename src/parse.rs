@@ -15,7 +15,7 @@ struct PartialEntry {
 }
 impl Entry {
     pub fn search_pattern(&self, pattern: &str) -> Vec<&Entry> {
-        if pattern == self.key {
+        if self.key.contains(pattern) {
             vec![self]
         } else if let EntryVal::SubEntries(entries) = &self.val {
             entries.iter().flat_map(|entry| entry.search_pattern(pattern)).collect()
@@ -72,59 +72,124 @@ mod tests {
     use super::*;
     use super::EntryVal::{Value, SubEntries};
     use std::fs;
-    const expected = Some(
-        vec![
-        Entry {
-            key: String::from("a"),
-            val: Value(
-                String::from("aval"),
-                ),
-        },
-        Entry {
-            key: String::from("b"),
+
+    #[test]
+    fn test_parse() {
+        let content = fs::read_to_string("test_file").expect("Test requires test file 'test_file' with specific contents to parse");
+        let res = parse_entries(&mut content.lines(), 0); 
+        let expected = Some(
+            vec![
+            Entry {
+                key: String::from("a"),
+                val: Value(
+                    String::from("aval"),
+                    ),
+            },
+            Entry {
+                key: String::from("b"),
+                val: SubEntries(
+                    vec![
+                    Entry {
+                        key: String::from("b0"),
+                        val: Value(
+                            String::from("b0val"),
+                            ),
+                    },
+                    Entry {
+                        key: String::from("b1"),
+                        val: Value(
+                            String::from("b1val"),
+                            ),
+                    },
+                    Entry {
+                        key: String::from("b_last"),
+                        val: SubEntries(
+                            vec![
+                            Entry {
+                                key: String::from("b20"),
+                                val: Value(
+                                    String::from("b20val"),
+                                    ),
+                            },
+                            Entry {
+                                key: String::from("b21"),
+                                val: Value(
+                                    String::from("b21val"),
+                                    ),
+                            },
+                            ],
+                            ),
+                    },
+                    ],
+                    ),
+            },
+            ],
+            );
+            assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn test_search_leaf() {
+        let content = fs::read_to_string("test_file").expect("Test requires test file 'test_file' with specific contents to parse");
+        let parsed = parse_entries(&mut content.lines(), 0).unwrap();
+        let res = search_pattern("b21", &parsed);
+        assert!(res.len() == 1);
+        let expected = Entry {
+            key: String::from("b21"),
+            val: EntryVal::Value(String::from("b21val")),
+        };
+        assert_eq!(res[0], &expected);
+    }
+
+    #[test]
+    fn test_search_inner_node() {
+        let content = fs::read_to_string("test_file").expect("Test requires test file 'test_file' with specific contents to parse");
+        let parsed = parse_entries(&mut content.lines(), 0).unwrap();
+        let res = search_pattern("b_last", &parsed);
+        assert!(res.len() == 1);
+        let expected = Entry {
+            key: String::from("b_last"),
             val: SubEntries(
                 vec![
                 Entry {
-                    key: String::from("b0"),
+                    key: String::from("b20"),
                     val: Value(
-                        String::from("b0val"),
+                        String::from("b20val"),
                         ),
                 },
                 Entry {
-                    key: String::from("b1"),
+                    key: String::from("b21"),
                     val: Value(
-                        String::from("b1val"),
-                        ),
-                },
-                Entry {
-                    key: String::from("b2"),
-                    val: SubEntries(
-                        vec![
-                        Entry {
-                            key: String::from("b20"),
-                            val: Value(
-                                String::from("b20val"),
-                                ),
-                        },
-                        Entry {
-                            key: String::from("b21"),
-                            val: Value(
-                                String::from("b21val"),
-                                ),
-                        },
-                        ],
+                        String::from("b21val"),
                         ),
                 },
                 ],
                 ),
-        },
-        ],
-        );
+        };
+
+        assert_eq!(res[0], &expected);
+    }
 
     #[test]
-    fn test_file() {
+    fn test_search_multiple_matches() {
         let content = fs::read_to_string("test_file").expect("Test requires test file 'test_file' with specific contents to parse");
-        let res = parse_entries(&mut content.lines(), 0); 
-            assert_eq!(res, expected);
+        let parsed = parse_entries(&mut content.lines(), 0).unwrap();
+        let res = search_pattern("b2", &parsed);
+        //assert!(res.len() == 2);
+        let expected = vec![
+            Entry {
+                key: String::from("b20"),
+                val: Value(
+                    String::from("b20val"),
+                    ),
+            },
+            Entry {
+                key: String::from("b21"),
+                val: Value(
+                    String::from("b21val"),
+                    ),
+            },
+        ];
+        assert_eq!(res, expected.iter().collect::<Vec<&Entry>>());
     }
 }

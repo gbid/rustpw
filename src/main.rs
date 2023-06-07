@@ -1,6 +1,6 @@
 mod parse;
 use std::{io, fs};
-use parse::{parse_entries, Entry, search_pattern};
+use parse::{parse_entries, Entry};
 
 
 

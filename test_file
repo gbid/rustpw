@@ -3,6 +3,6 @@ a: aval
 b:
 	b0: b0val
 	b1: b1val
-	b2:
+	b_last:
 		b20: b20val
 		b21: b21val
