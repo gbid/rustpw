@@ -5,7 +5,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::io;
 
-pub fn present_entry(entry: Entry, path: &str) {
+fn present_entry(entry: Entry, path: &str) {
     let next_path = if path.is_empty() {
         entry.key.clone()
     } else {
@@ -24,7 +24,7 @@ pub fn present_entry(entry: Entry, path: &str) {
 fn copy_value(val: String, path: &str) {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(val.to_owned()).unwrap();
-    let seconds_to_clipboard_clean = 10;
+    let seconds_to_clipboard_clean = 30;
     println!("Copied value to clipboard for key path:\n{}", path);
     println!("Value remains in clipboard for {} seconds", seconds_to_clipboard_clean);
     
@@ -34,7 +34,7 @@ fn copy_value(val: String, path: &str) {
     println!("Cleared clipboard");
 }
 
-fn present_subentries(entries: &[Entry], path: &str) {
+pub fn present_subentries(entries: &[Entry], path: &str) {
     let mut input = String::new();
     for (i, entry) in entries.iter().enumerate() {
         println!("{}: {}", i + 1, entry.key);
@@ -45,4 +45,3 @@ fn present_subentries(entries: &[Entry], path: &str) {
         present_entry(entries[choice - 1].clone(), path);
     }
 }
-

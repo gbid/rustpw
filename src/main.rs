@@ -16,17 +16,21 @@ fn main() {
     let pattern = &args[1];
     let filename = &args[2];
 
-    let content = fs::read_to_string(filename)
+    let mut content = fs::read_to_string(filename)
         .expect(format!("Specified file {} does not exist", filename).as_str());
 
-    let entries = parse::parse_entries(&mut content.lines().peekable(), 0).expect("Content was ill formatted");
+    let entry = match parse::parse(&mut content) {
+        Ok(entry) => entry,
+        Err(e) => {
+            println!("Error parsing file: {:#?}", e);
+            return;
+        },
+    };
 
-    let found_entries = search::search_pattern(pattern, &entries);
-
-    if !found_entries.is_empty() {
-        for entry in found_entries {
-            interaction::present_entry(entry.clone(), "");
-        }
+    let matching_entries = entry.search_pattern(pattern);
+    if !matching_entries.is_empty() {
+        let entries_cloned = matching_entries.iter().cloned().cloned().collect::<Vec<_>>();
+        interaction::present_subentries(&entries_cloned, "");
     } else {
         println!("No entries found for the pattern '{}'", pattern);
     }

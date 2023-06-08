@@ -23,6 +23,13 @@ pub enum ParseError {
     InvalidFormat(String),
 }
 
+pub fn parse(content: &mut String) -> Result<Entry, ParseError> {
+    let entries = parse_entries(&mut content.lines().peekable(), 0)?;
+    Ok(Entry {
+        key: String::from(""),
+        val: EntryVal::SubEntries(entries),
+    })
+}
 pub fn parse_entries(lines: &mut Peekable<Lines>, indent_lvl: usize) -> Result<Vec<Entry>, ParseError> {
     let mut entries = Vec::new();
     while let Some(line) = lines.peek().cloned() {
