@@ -1,10 +1,10 @@
 a: aval
 
-b foo:
+b:
 	b0: b0val
 	b1: b1val
 	b last:
-		b20: b20 val
-		b21: b21 val
+		b20: b20val
+		b21: b21val
 
 c: c value
