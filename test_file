@@ -1,8 +1,10 @@
 a: aval
 
-b:
+b foo:
 	b0: b0val
 	b1: b1val
-	b_last:
-		b20: b20val
-		b21: b21val
+	b last:
+		b20: b20 val
+		b21: b21 val
+
+c: c value
