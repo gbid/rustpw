@@ -18,7 +18,7 @@ struct PartialEntry {
 use std::iter::Peekable;
 use std::str::Lines;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParseError {
     InvalidFormat(String),
 }

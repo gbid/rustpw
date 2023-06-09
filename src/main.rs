@@ -5,17 +5,23 @@ mod interaction;
 use std::env;
 use std::fs;
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+pub enum OutputMode {
+    Print,
+    Clipboard,
+}
+enum Mode {
+    Retrieve(OutputMode),
+    Generate,
+}
 
-    if args.len() < 3 {
-        println!("Please provide a pattern to search for and a file to search in as arguments.");
+fn handle_retrieve(args: &[String], mode: &OutputMode) {
+    if args.len() < 4 {
+        eprintln!("Please provide a file to search in and a pattern to search for as arguments.");
         return;
     }
 
-    let pattern = &args[1];
     let filename = &args[2];
-
+    let pattern = &args[3];
     let mut content = fs::read_to_string(filename)
         .expect(format!("Specified file {} does not exist", filename).as_str());
 
@@ -30,9 +36,42 @@ fn main() {
     let matching_entries = entry.search_pattern(pattern);
     if !matching_entries.is_empty() {
         let entries_cloned = matching_entries.iter().cloned().cloned().collect::<Vec<_>>();
-        interaction::present_subentries(&entries_cloned, "");
+        interaction::present_subentries(&entries_cloned, "", mode);
     } else {
         println!("No entries found for the pattern '{}'", pattern);
+    }
+}
+fn handle_generate(args: &[String]) {
+    todo!("{:?}", args)
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Please provide a mode to supply from 'clipboard', 'print', 'generate' as first argument");
+        return;
+    }
+
+    let mode = match args[1].as_str() {
+        "clipboard" => Mode::Retrieve(OutputMode::Clipboard),
+        "print" => Mode::Retrieve(OutputMode::Print),
+        "generate" => Mode::Generate,
+        _ => {
+            eprintln!("Please provide a mode to supply from 'clipboard', 'print', 'generate' as first argument");
+            return;
+        }
+    };
+
+    match mode {
+        Mode::Retrieve(OutputMode::Clipboard) => {
+            handle_retrieve(&args, &OutputMode::Clipboard);
+        },
+        Mode::Retrieve(OutputMode::Print) => {
+            handle_retrieve(&args, &OutputMode::Print);
+        },
+        Mode::Generate => {
+            handle_generate(&args);
+        },
     }
 }
 
@@ -49,7 +88,7 @@ mod tests {
         let content = fs::read_to_string("test_file")
             .expect("Test requires test file 'test_file' with specific contents to parse");
         let res = parse::parse_entries(&mut content.lines().peekable(), 0);
-        let expected = Some(vec![
+        let expected = Ok(vec![
             Entry {
                 key: String::from("a"),
                 val: Value(String::from("aval")),

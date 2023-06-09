@@ -15,7 +15,7 @@ impl Entry {
     }
 }
 
-pub fn _search_pattern<'a>(pattern: &str, entries: &'a [Entry]) -> Vec<&'a Entry> {
+pub fn search_pattern<'a>(pattern: &str, entries: &'a [Entry]) -> Vec<&'a Entry> {
     entries
         .iter()
         .flat_map(|entry| entry.search_pattern(pattern))

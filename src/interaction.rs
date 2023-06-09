@@ -1,3 +1,4 @@
+use crate::OutputMode;
 use crate::parse::{Entry, EntryVal};
 use clipboard::ClipboardProvider;
 use clipboard::ClipboardContext;
@@ -5,18 +6,21 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::io;
 
-fn present_entry(entry: Entry, path: &str) {
+fn present_entry(entry: Entry, path: &str, mode: &OutputMode) {
     let next_path = if path.is_empty() {
         entry.key.clone()
     } else {
         format!("{}->{}", path, entry.key)
     };
-    match entry.val {
-        EntryVal::Value(val) => {
+    match (entry.val, mode) {
+        (EntryVal::Value(val), OutputMode::Clipboard) => {
             copy_value(val, &next_path);
         },
-        EntryVal::SubEntries(entries) => {
-            present_subentries(&entries, &next_path);
+        (EntryVal::Value(val), OutputMode::Print) => {
+            println!("{}", val);
+        },
+        (EntryVal::SubEntries(entries), _) => {
+            present_subentries(&entries, &next_path, mode);
         },
     }
 }
@@ -34,14 +38,18 @@ fn copy_value(val: String, path: &str) {
     println!("Cleared clipboard");
 }
 
-pub fn present_subentries(entries: &[Entry], path: &str) {
-    let mut input = String::new();
-    for (i, entry) in entries.iter().enumerate() {
-        println!("{}: {}", i + 1, entry.key);
-    }
-    io::stdin().read_line(&mut input).unwrap();
-    let choice = input.trim().parse::<usize>().unwrap();
-    if choice > 0 && choice <= entries.len() {
-        present_entry(entries[choice - 1].clone(), path);
+pub fn present_subentries(entries: &[Entry], path: &str, mode: &OutputMode) {
+    if entries.len() > 1 {
+        let mut input = String::new();
+        for (i, entry) in entries.iter().enumerate() {
+            println!("{}: {}", i + 1, entry.key);
+        }
+        io::stdin().read_line(&mut input).unwrap();
+        let choice = input.trim().parse::<usize>().unwrap();
+        if choice > 0 && choice <= entries.len() {
+            present_entry(entries[choice - 1].clone(), path, mode);
+        }
+    } else {
+        present_entry(entries[0].clone(), path, mode);
     }
 }
