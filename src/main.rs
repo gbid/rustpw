@@ -1,9 +1,12 @@
 mod parse;
 mod search;
 mod interaction;
+mod generation;
 
 use std::env;
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 
 pub enum OutputMode {
     Print,
@@ -22,6 +25,7 @@ fn handle_retrieve(args: &[String], mode: &OutputMode) {
 
     let filename = &args[2];
     let pattern = &args[3];
+
     let mut content = fs::read_to_string(filename)
         .expect(format!("Specified file {} does not exist", filename).as_str());
 
@@ -42,7 +46,23 @@ fn handle_retrieve(args: &[String], mode: &OutputMode) {
     }
 }
 fn handle_generate(args: &[String]) {
-    todo!("{:?}", args)
+    if args.len() < 4 {
+        eprintln!("Please specify which file the password should be written to and for which key or service the password belongs.");
+        return;
+    }
+    let filename = &args[2];
+    let key = &args[3];
+    let password = generation::generate_password(30);
+    write_password(filename, key, &password)
+        .expect("Could not write to specified file {}.", filename);
+}
+
+fn write_password(filename: &str, key: &str, password: &str) -> std::io::Result<()> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(filename)?;
+    writeln!(file, "\n{}: {}", key, password)
 }
 
 fn main() {
