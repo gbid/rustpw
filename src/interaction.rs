@@ -6,7 +6,7 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::io;
 
-fn present_entry(entry: Entry, path: &str, mode: &OutputMode) {
+fn present_entry(entry: Entry, path: &str, mode: OutputMode) {
     let next_path = if path.is_empty() {
         entry.key.clone()
     } else {
@@ -38,7 +38,7 @@ fn copy_value(val: String, path: &str) {
     println!("Cleared clipboard");
 }
 
-pub fn present_subentries(entries: &[Entry], path: &str, mode: &OutputMode) {
+pub fn present_subentries(entries: &[Entry], path: &str, mode: OutputMode) {
     if entries.len() > 1 {
         let mut input = String::new();
         for (i, entry) in entries.iter().enumerate() {

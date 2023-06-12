@@ -3,21 +3,24 @@ mod search;
 mod interaction;
 mod generation;
 
+use crate::parse::{Entry, EntryVal};
 use std::env;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 
+#[derive(Copy, Clone)]
 pub enum OutputMode {
     Print,
     Clipboard,
 }
+#[derive(Copy, Clone)]
 enum Mode {
     Retrieve(OutputMode),
     Generate,
 }
 
-fn handle_retrieve(args: &[String], mode: &OutputMode) {
+fn handle_retrieve(args: &[String], mode: OutputMode) {
     if args.len() < 4 {
         eprintln!("Please provide a file to search in and a pattern to search for as arguments.");
         return;
@@ -54,7 +57,15 @@ fn handle_generate(args: &[String]) {
     let key = &args[3];
     let password = generation::generate_password(30);
     write_password(filename, key, &password)
-        .expect("Could not write to specified file {}.", filename);
+        .expect("Could not write to specified file");
+    println!("Generated password for '{}'.", key);
+
+    // copy password to clipboard after successfull write
+    let entry = vec![Entry {
+        key: key.to_string(),
+        val: EntryVal::Value(password),
+    }];
+    interaction::present_subentries(&entry, "", OutputMode::Clipboard);
 }
 
 fn write_password(filename: &str, key: &str, password: &str) -> std::io::Result<()> {
@@ -84,10 +95,10 @@ fn main() {
 
     match mode {
         Mode::Retrieve(OutputMode::Clipboard) => {
-            handle_retrieve(&args, &OutputMode::Clipboard);
+            handle_retrieve(&args, OutputMode::Clipboard);
         },
         Mode::Retrieve(OutputMode::Print) => {
-            handle_retrieve(&args, &OutputMode::Print);
+            handle_retrieve(&args, OutputMode::Print);
         },
         Mode::Generate => {
             handle_generate(&args);
