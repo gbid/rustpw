@@ -27,7 +27,7 @@ fn present_entry(entry: Entry, path: &str, mode: OutputMode) {
 
 fn copy_value(val: String, path: &str) {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
-    ctx.set_contents(val.to_owned()).unwrap();
+    ctx.set_contents(val).unwrap();
     let seconds_to_clipboard_clean = 30;
     println!("Copied value to clipboard for key path:\n{}", path);
     println!(

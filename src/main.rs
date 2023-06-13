@@ -161,10 +161,10 @@ mod tests {
 
     #[test]
     fn test_search_leaf() {
-        let content = fs::read_to_string("test_file")
+        let mut content = fs::read_to_string("test_file")
             .expect("Test requires test file 'test_file' with specific contents to parse");
-        let parsed = parse::parse_entries(&mut content.lines().peekable(), 0).unwrap();
-        let res = search::search_pattern("b21", &parsed);
+        let parsed = parse::parse(&mut content).unwrap();
+        let res = parsed.search_pattern("b21", &parsed);
         assert!(res.len() == 1);
         let expected = Entry {
             key: String::from("b21"),
@@ -175,10 +175,10 @@ mod tests {
 
     #[test]
     fn test_search_inner_node() {
-        let content = fs::read_to_string("test_file")
+        let mut content = fs::read_to_string("test_file")
             .expect("Test requires test file 'test_file' with specific contents to parse");
-        let parsed = parse::parse_entries(&mut content.lines().peekable(), 0).unwrap();
-        let res = search::search_pattern("b last", &parsed);
+        let parsed = parse::parse(&mut content).unwrap();
+        let res = parsed.search_pattern("b last", &parsed);
         assert!(res.len() == 1);
         let expected = Entry {
             key: String::from("b last"),
@@ -198,10 +198,10 @@ mod tests {
 
     #[test]
     fn test_search_multiple_matches() {
-        let content = fs::read_to_string("test_file")
+        let mut content = fs::read_to_string("test_file")
             .expect("Test requires test file 'test_file' with specific contents to parse");
-        let parsed = parse::parse_entries(&mut content.lines().peekable(), 0).unwrap();
-        let res = search::search_pattern("b2", &parsed);
+        let parsed = parse::parse(&mut content).unwrap();
+        let res = parsed.search_pattern("b2", &parsed);
         let expected = vec![
             Entry {
                 key: String::from("b20"),
