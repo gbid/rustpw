@@ -4,33 +4,67 @@ mod interaction;
 mod generation;
 
 use crate::parse::{Entry, EntryVal};
-use std::env;
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
+use std::path::PathBuf;
+use clap::{Parser, Subcommand, ValueEnum};
 
-#[derive(Copy, Clone)]
+#[derive(Parser)]
+#[command(author, version, about, long_about=None)]
+struct Args {
+    /// specifies password file
+    #[arg(short, long, value_name="FILE")]
+    path: PathBuf,
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// retrieves a password
+    Retrieve {
+        #[arg(short, long)]
+        /// specifies how the password should be output
+        output_mode: OutputMode,
+
+        /// the key pattern for which the password should be retrieved
+        #[arg(short, long)]
+        pattern: String,
+    },
+    /// generates a password and then writes it to the password file
+    Generate {
+        /// specifies the key for which a password should be generated
+        #[arg(short, long)]
+        key: String,
+    },
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum OutputMode {
+    /// print password to stdout
     Print,
+    /// copy password to clipboard
     Clipboard,
 }
-#[derive(Copy, Clone)]
-enum Mode {
-    Retrieve(OutputMode),
-    Generate,
-}
 
-fn handle_retrieve(args: &[String], mode: OutputMode) {
-    if args.len() < 4 {
-        eprintln!("Please provide a file to search in and a pattern to search for as arguments.");
-        return;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+    match args.command {
+        Commands::Retrieve { output_mode, pattern } => {
+            handle_retrieve(&args.path, &pattern, output_mode);
+        },
+        Commands::Generate { key } => {
+            handle_generate(&args.path, &key);
+        },
     }
 
-    let filename = &args[2];
-    let pattern = &args[3];
+    Ok(())
+}
 
-    let mut content = fs::read_to_string(filename)
-        .expect(format!("Specified file {} does not exist", filename).as_str());
+fn handle_retrieve(path: &PathBuf, pattern: &str, mode: OutputMode) {
+    let mut content = fs::read_to_string(path)
+        .expect("Specified file does not exist");
 
     let entry = match parse::parse(&mut content) {
         Ok(entry) => entry,
@@ -48,15 +82,9 @@ fn handle_retrieve(args: &[String], mode: OutputMode) {
         println!("No entries found for the pattern '{}'", pattern);
     }
 }
-fn handle_generate(args: &[String]) {
-    if args.len() < 4 {
-        eprintln!("Please specify which file the password should be written to and for which key or service the password belongs.");
-        return;
-    }
-    let filename = &args[2];
-    let key = &args[3];
+fn handle_generate(path: &PathBuf, key: &str) {
     let password = generation::generate_password(30);
-    write_password(filename, key, &password)
+    write_password(path, key, &password)
         .expect("Could not write to specified file");
     println!("Generated password for '{}'.", key);
 
@@ -67,44 +95,14 @@ fn handle_generate(args: &[String]) {
     }];
     interaction::present_subentries(&entry, "", OutputMode::Clipboard);
 }
-
-fn write_password(filename: &str, key: &str, password: &str) -> std::io::Result<()> {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(filename)?;
-    writeln!(file, "\n{}: {}", key, password)
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Please provide a mode to supply from 'clipboard', 'print', 'generate' as first argument");
-        return;
+fn write_password(path: &PathBuf, key: &str, password: &str)
+    -> std::io::Result<()> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(path)?;
+        writeln!(file, "\n{}: {}", key, password)
     }
-
-    let mode = match args[1].as_str() {
-        "clipboard" => Mode::Retrieve(OutputMode::Clipboard),
-        "print" => Mode::Retrieve(OutputMode::Print),
-        "generate" => Mode::Generate,
-        _ => {
-            eprintln!("Please provide a mode to supply from 'clipboard', 'print', 'generate' as first argument");
-            return;
-        }
-    };
-
-    match mode {
-        Mode::Retrieve(OutputMode::Clipboard) => {
-            handle_retrieve(&args, OutputMode::Clipboard);
-        },
-        Mode::Retrieve(OutputMode::Print) => {
-            handle_retrieve(&args, OutputMode::Print);
-        },
-        Mode::Generate => {
-            handle_generate(&args);
-        },
-    }
-}
 
 #[cfg(test)]
 mod tests {
