@@ -15,9 +15,9 @@ struct PartialEntry {
     val: Option<EntryVal>,
 }
 
+use std::cmp::Ordering;
 use std::iter::Peekable;
 use std::str::Lines;
-use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
@@ -48,7 +48,7 @@ pub fn parse_entries(
                 lines.next();
                 let partial_entry: PartialEntry = parse_entry(line).ok_or(
                     ParseError::InvalidFormat(format!("Cannot parse line:{}", line)),
-                    )?;
+                )?;
                 let key = partial_entry.key;
                 let val = if let Some(atom_val) = partial_entry.val {
                     atom_val
@@ -56,13 +56,13 @@ pub fn parse_entries(
                     EntryVal::SubEntries(parse_entries(lines, indent_lvl + 1)?)
                 };
                 entries.push(Entry { key, val });
-            },
+            }
             Ordering::Greater => {
                 return Err(ParseError::InvalidFormat(format!(
-                            "Invalid indentation level on line: {}",
-                            line
-                            )));
-            },
+                    "Invalid indentation level on line: {}",
+                    line
+                )));
+            }
         }
     }
     Ok(entries)

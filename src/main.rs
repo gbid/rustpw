@@ -1,5 +1,13 @@
 //! A simple command-line password manager which I wrote for personal usage.
-//! Difference to 'pass':
+//! Main differences to [`pass`](https://www.passwordstore.org/):
+//! 1. rustpw does not encrypt the stored passwords. Therefore, use rustpw only if you know what you are
+//!    doing.
+//! 2. rustpw is intentionally minimal. It comprises roughly 250 lines of rust. Therefore, you can
+//!    review all the code managing your passwords in an hour or two. Besides the standard library,
+//!    rustpw only uses the very common [`clap`](https://crates.io/crates/clap) crate for parsing of command line arguments.
+//! 3. rustpw stores your passwords in a single plain text file using simple `key: value`
+//!    syntax. Therefore you can always step in and retrieve your passwords manually.
+
 mod generation;
 mod interaction;
 mod parse;
