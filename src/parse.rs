@@ -1,18 +1,18 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum EntryVal {
-	Value(String),
-	SubEntries(Vec<Entry>),
+    Value(String),
+    SubEntries(Vec<Entry>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Entry {
-	pub key: String,
-	pub val: EntryVal,
+    pub key: String,
+    pub val: EntryVal,
 }
 
 struct PartialEntry {
-	key: String,
-	val: Option<EntryVal>,
+    key: String,
+    val: Option<EntryVal>,
 }
 
 use std::iter::Peekable;
@@ -30,7 +30,10 @@ pub fn parse(content: &mut String) -> Result<Entry, ParseError> {
         val: EntryVal::SubEntries(entries),
     })
 }
-pub fn parse_entries(lines: &mut Peekable<Lines>, indent_lvl: usize) -> Result<Vec<Entry>, ParseError> {
+pub fn parse_entries(
+    lines: &mut Peekable<Lines>,
+    indent_lvl: usize,
+) -> Result<Vec<Entry>, ParseError> {
     let mut entries = Vec::new();
     while let Some(line) = lines.peek().cloned() {
         if line.is_empty() {
@@ -42,8 +45,9 @@ pub fn parse_entries(lines: &mut Peekable<Lines>, indent_lvl: usize) -> Result<V
             break;
         } else if indent_lvl == line_indent_lvl {
             lines.next();
-            let partial_entry: PartialEntry = parse_entry(&line)
-                .ok_or(ParseError::InvalidFormat(format!("Cannot parse line:{}", line)))?;
+            let partial_entry: PartialEntry = parse_entry(&line).ok_or(
+                ParseError::InvalidFormat(format!("Cannot parse line:{}", line)),
+            )?;
             let key = partial_entry.key;
             let val = if let Some(atom_val) = partial_entry.val {
                 atom_val
@@ -52,20 +56,23 @@ pub fn parse_entries(lines: &mut Peekable<Lines>, indent_lvl: usize) -> Result<V
             };
             entries.push(Entry { key, val });
         } else {
-            return Err(ParseError::InvalidFormat(format!("Invalid indentation level on line: {}", line)));
+            return Err(ParseError::InvalidFormat(format!(
+                "Invalid indentation level on line: {}",
+                line
+            )));
         }
     }
     Ok(entries)
 }
 
 fn parse_entry(line: &str) -> Option<PartialEntry> {
-	let mut parts = line.splitn(2, ':');
-	let key = parts.next()?.trim().to_string();
-	let val = parts.next()?.trim().to_string();
-	let val = if val == String::from("") {
-		None
-	} else {
-		Some(EntryVal::Value(val))
-	};
-	Some(PartialEntry { key, val })
+    let mut parts = line.splitn(2, ':');
+    let key = parts.next()?.trim().to_string();
+    let val = parts.next()?.trim().to_string();
+    let val = if val == String::from("") {
+        None
+    } else {
+        Some(EntryVal::Value(val))
+    };
+    Some(PartialEntry { key, val })
 }

@@ -1,20 +1,22 @@
+//! A simple command-line password manager which I wrote for personal usage.
+//! Difference to 'pass':
+mod generation;
+mod interaction;
 mod parse;
 mod search;
-mod interaction;
-mod generation;
 
 use crate::parse::{Entry, EntryVal};
+use clap::{Parser, Subcommand, ValueEnum};
 use std::fs;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::path::PathBuf;
-use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about=None)]
 struct Args {
     /// specifies password file
-    #[arg(short, long, value_name="FILE")]
+    #[arg(short, long, value_name = "FILE")]
     path: PathBuf,
     #[command(subcommand)]
     command: Commands,
@@ -51,32 +53,38 @@ pub enum OutputMode {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     match args.command {
-        Commands::Retrieve { output_mode, pattern } => {
+        Commands::Retrieve {
+            output_mode,
+            pattern,
+        } => {
             handle_retrieve(&args.path, &pattern, output_mode);
-        },
+        }
         Commands::Generate { key } => {
             handle_generate(&args.path, &key);
-        },
+        }
     }
 
     Ok(())
 }
 
 fn handle_retrieve(path: &PathBuf, pattern: &str, mode: OutputMode) {
-    let mut content = fs::read_to_string(path)
-        .expect("Specified file does not exist");
+    let mut content = fs::read_to_string(path).expect("Specified file does not exist");
 
     let entry = match parse::parse(&mut content) {
         Ok(entry) => entry,
         Err(e) => {
             println!("Error parsing file: {:#?}", e);
             return;
-        },
+        }
     };
 
     let matching_entries = entry.search_pattern(pattern);
     if !matching_entries.is_empty() {
-        let entries_cloned = matching_entries.iter().cloned().cloned().collect::<Vec<_>>();
+        let entries_cloned = matching_entries
+            .iter()
+            .cloned()
+            .cloned()
+            .collect::<Vec<_>>();
         interaction::present_subentries(&entries_cloned, "", mode);
     } else {
         println!("No entries found for the pattern '{}'", pattern);
@@ -84,8 +92,7 @@ fn handle_retrieve(path: &PathBuf, pattern: &str, mode: OutputMode) {
 }
 fn handle_generate(path: &PathBuf, key: &str) {
     let password = generation::generate_password(30);
-    write_password(path, key, &password)
-        .expect("Could not write to specified file");
+    write_password(path, key, &password).expect("Could not write to specified file");
     println!("Generated password for '{}'.", key);
 
     // copy password to clipboard after successfull write
@@ -95,20 +102,16 @@ fn handle_generate(path: &PathBuf, key: &str) {
     }];
     interaction::present_subentries(&entry, "", OutputMode::Clipboard);
 }
-fn write_password(path: &PathBuf, key: &str, password: &str)
-    -> std::io::Result<()> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .open(path)?;
-        writeln!(file, "\n{}: {}", key, password)
-    }
+fn write_password(path: &PathBuf, key: &str, password: &str) -> std::io::Result<()> {
+    let mut file = OpenOptions::new().write(true).append(true).open(path)?;
+    writeln!(file, "\n{}: {}", key, password)
+}
 
 #[cfg(test)]
 mod tests {
-    use super::parse::EntryVal::{SubEntries, Value};
-    use super::parse::Entry;
     use super::parse;
+    use super::parse::Entry;
+    use super::parse::EntryVal::{SubEntries, Value};
     use super::search;
     use std::fs;
 

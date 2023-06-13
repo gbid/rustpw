@@ -1,10 +1,10 @@
-use crate::OutputMode;
 use crate::parse::{Entry, EntryVal};
-use clipboard::ClipboardProvider;
+use crate::OutputMode;
 use clipboard::ClipboardContext;
+use clipboard::ClipboardProvider;
+use std::io;
 use std::thread::sleep;
 use std::time::Duration;
-use std::io;
 
 fn present_entry(entry: Entry, path: &str, mode: OutputMode) {
     let next_path = if path.is_empty() {
@@ -15,13 +15,13 @@ fn present_entry(entry: Entry, path: &str, mode: OutputMode) {
     match (entry.val, mode) {
         (EntryVal::Value(val), OutputMode::Clipboard) => {
             copy_value(val, &next_path);
-        },
+        }
         (EntryVal::Value(val), OutputMode::Print) => {
             println!("{}", val);
-        },
+        }
         (EntryVal::SubEntries(entries), _) => {
             present_subentries(&entries, &next_path, mode);
-        },
+        }
     }
 }
 
@@ -30,8 +30,11 @@ fn copy_value(val: String, path: &str) {
     ctx.set_contents(val.to_owned()).unwrap();
     let seconds_to_clipboard_clean = 30;
     println!("Copied value to clipboard for key path:\n{}", path);
-    println!("Value remains in clipboard for {} seconds", seconds_to_clipboard_clean);
-    
+    println!(
+        "Value remains in clipboard for {} seconds",
+        seconds_to_clipboard_clean
+    );
+
     sleep(Duration::from_secs(seconds_to_clipboard_clean));
 
     ctx.set_contents("".to_string()).unwrap();
