@@ -1,9 +1,3 @@
-# rustpw
-A simple command line password manager.
-Sure, here's a template you can use as a starting point for your README.md file:
-
----
-
 # RustPW
 
 RustPW is a simple, command-line password manager designed for personal usage. It aims to offer a minimal and easily reviewable codebase, ensuring complete transparency about how your passwords are managed.
